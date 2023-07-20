@@ -41,6 +41,7 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
   const [attendees, setAttendees] = useState([])
   const [inviteStates, setInviteStates] = useState([]);
 
+  // console.log(inviteStates)
   const history = useHistory();
 
   const { meeting } = location.state || {};
@@ -55,6 +56,8 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
       setAttendees(meeting?.attendees);
     }
 
+
+
     API.Login(meeting?.conferenceKey.conferenceID , meeting?.chair , "ConferenceID")
     .then((res) => {
       console.log("Join Response: ",res);
@@ -62,6 +65,79 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
       if (res.message === "success") {
         localStorage.setItem('cred',res.token)
         localStorage.setItem("Conference ID:", meeting?.conferenceKey?.conferenceID)
+
+        API.OnlineConferenceInfo(
+          res.token,
+          meeting?.conferenceKey?.conferenceID,
+          0
+        )
+          .then((confInfoRes) => {
+            // Process the conference info response here
+            console.log("Conference Info: ", confInfoRes);
+      
+            const conferenceDetails =
+              confInfoRes?.spellQueryconference?.conference;
+            let inviteState = conferenceDetails?.inviteStates?.inviteState;
+            if(Array.isArray(inviteState)){
+            setInviteStates(inviteState);
+            }
+            let participantsDetails = conferenceDetails?.participants
+              ? conferenceDetails?.participants?.participant
+              : [];
+            console.log("Invite states: ", inviteState);
+            console.log("Participants details: ", participantsDetails);
+
+            if(!Array.isArray(inviteState)) {
+              setInviteStates(inviteState ? [inviteState] : []);
+            }
+      
+            if (!Array.isArray(participantsDetails)) {
+              participantsDetails = participantsDetails
+                ? [participantsDetails]
+                : [];
+            }
+      
+            inviteState?.forEach((invite) => {
+              if (invite.state === "200") {
+                participantsDetails?.forEach((participantDetail) => {
+                  if (
+                    invite?.phone ===
+                    participantDetail?.subscribers?.subscriber?.subscriberID
+                  ) {
+                    setAttendees((prevParticipants) =>
+                      prevParticipants?.reduce((acc, participant) => {
+                        if (
+                          participant?.addressEntry[0]?.address === invite?.phone &&
+                          !participant?.participantID
+                        ) {
+                          return [
+                            ...acc,
+                            {
+                              ...participant,
+                              participantID:
+                                participantDetail?.subscribers?.subscriber?.callID,
+                            },
+                          ];
+                        }
+                        return [...acc, participant];
+                      }, [])
+                    );
+                  }
+                });
+              } else {
+                setAttendees((prevParticipants) =>
+                  prevParticipants.map((participant) => ({
+                    ...participant,
+                    participantID: undefined,
+                  }))
+                );
+              }
+            });
+          })
+          .catch((err) => {
+            console.log(err);
+            // Handle errors here
+          })
 
           // Start the loop function after successful login
             loopFunction = setInterval(() => {
@@ -94,6 +170,10 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
                   participantsDetails = participantsDetails
                     ? [participantsDetails]
                     : [];
+                }
+
+                if(!Array.isArray(inviteState)){
+                  inviteState = inviteState? [inviteState] : []
                 }
           
                 inviteState?.forEach((invite) => {
@@ -149,7 +229,7 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
     return () => clearInterval(loopFunction);
   },[]); 
 
-  const token = localStorage.getItem('cred')
+  const cred = localStorage.getItem('cred')
   const confID = localStorage.getItem('Conference ID:')
 
   const handleClose = () => {
@@ -191,26 +271,6 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
     console.log('click createsubconf')
   };
 
-
-  const handleAddParticipant = (name: string, phoneNumber: string) => {
-    const newParticipant = {
-      attendeeName: name,
-      conferenceRole: 'general',
-      addressEntry: [
-        {
-          address: phoneNumber,
-          type: 'phone'
-        }
-      ],
-      muted: false,
-      onCall: false 
-    };
-    setAttendees((prevParticipants) => [
-      ...prevParticipants,
-      newParticipant,
-    ]);
-  };
-
   const handleDeleteParticipant = (index) => {
     const updatedParticipants = [...attendees];
     updatedParticipants.splice(index, 1);
@@ -225,10 +285,12 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
   };
 
   const handleCallParticipantAbsent = (index: number) => {
-    const attendee = attendees[index]
-    API.InviteParticipants(token, confID, [{
-          name: attendee?.attendeeName,
-          phone: attendee?.addressEntry?.address
+    const attendee = inviteStates[index]
+    API.InviteParticipants(cred, confID, [{
+          name: `${attendee.name}`,
+          phone: `${attendee.phone}`,
+          role: 'general',
+          isMute: false
     }] )
     .then((res) => {
       console.log(res);})
@@ -262,12 +324,10 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
           {/* Participant List */}
           <ContactList 
             participants={attendees} 
-            onDeleteParticipant={handleDeleteParticipant}
             onToggleParticipantMute={handleToggleParticipantMute}
             onCallAbsentParticipant= {handleCallParticipantAbsent} 
             inviteStates = {inviteStates}
-            />
-
+          />
           {/* Fab Button */}
           <IonFab className='ion-margin' vertical="bottom" horizontal="end" slot="fixed">
             <IonFabButton className='fabicon-btn'>
@@ -305,7 +365,8 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
           {/* Modal */}
           <ModalCall
             isOpen={showModal}
-            onAddParticipant={handleAddParticipant}
+            conferenceID = {meeting?.conferenceKey?.conferenceID}
+            // onAddParticipant={handleAddParticipant}
             onClose={() => {setShowModal(false)}}
           />
           <IonAlert

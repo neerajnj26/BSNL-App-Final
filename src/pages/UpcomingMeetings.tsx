@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   IonButton,
   IonCard,
@@ -23,7 +23,7 @@ const UpcomingMeetings: React.FC<{ searchSubject: string }> = ({
   searchSubject,
 }) => {
   const [meetings, setMeetings] = useState<any[]>([]);
-  const [attendees, setAttendees] = useState([])
+  let [attendees, setAttendees] = useState([])
   const [expandedCard, setExpandedCard] = useState<number | null>(null);
   const [emptyList, setEmptyList] = useState(false)
   
@@ -53,9 +53,8 @@ const UpcomingMeetings: React.FC<{ searchSubject: string }> = ({
           .filter((value) => typeof value === 'object')
           .map((meeting) => meeting);
         setMeetings(meetingArray);
+
         if(res.message === 'no_upcoming_meetings'){
-          const mappedAttendees = meetings.map((meeting) => meeting.attendees);
-          setAttendees(mappedAttendees);
           setEmptyList(true)
         }
         else{
@@ -63,7 +62,7 @@ const UpcomingMeetings: React.FC<{ searchSubject: string }> = ({
         }
       })
       .catch((err: any) => {
-        alert('Could not fetch meeting details. Please try again later.');
+        console.log('Could not fetch meeting details. Please try again later.');
       });
   }, [meetings]);
 
@@ -101,7 +100,7 @@ const UpcomingMeetings: React.FC<{ searchSubject: string }> = ({
 
     // Format the date and time string
     var formattedDate = year + '-' + month + '-' + day;
-    var formattedTime = hours + ':' + minutes;
+    var formattedTime = hours + ':' + (parseInt(minutes) < 10? `0${minutes}`: minutes);
 
     // Return the formatted date and time
     return {
@@ -122,8 +121,6 @@ const UpcomingMeetings: React.FC<{ searchSubject: string }> = ({
     return { hours: hours, minutes: minutes };
   };
 
-  //Handle Functions
-
   const handleJoinConference = (meeting: any) => {
     history.push('/instant-conf', {meeting})
   };
@@ -132,7 +129,6 @@ const UpcomingMeetings: React.FC<{ searchSubject: string }> = ({
       console.log("Removing meeting: ", meeting);
       API.RemoveConference(token, meeting.conferenceKey.conferenceID, "0")
         .then((res: any) => {
-          console.log(res);
           const token = getCookie("user");
           API.queryConferenceList(token)
             .then((res: any) => {
@@ -155,7 +151,7 @@ const UpcomingMeetings: React.FC<{ searchSubject: string }> = ({
   };
 
   const handleEditConference = (meeting: any) => {
-
+    history.push('/edit-conf', {meeting})
   }
 
   const handleFullView = (cardIndex: number) => {
@@ -212,9 +208,9 @@ const UpcomingMeetings: React.FC<{ searchSubject: string }> = ({
                 <IonText>
                   Duration:{' '}
                   {convertMillisecondsToHoursAndMinutes(meeting.length).hours}{' '}
-                  hours{' '}
+                  hour(s){' '}
                   {convertMillisecondsToHoursAndMinutes(meeting.length).minutes}{' '}
-                  minutes{' '}
+                  minute(s){' '}
                 </IonText>
                 <br />
                 <IonText>Creator: {meeting.scheduserName} </IonText>
@@ -236,12 +232,19 @@ const UpcomingMeetings: React.FC<{ searchSubject: string }> = ({
                 <br />
                 <IonText>Attendees:</IonText>
                 <br />
-                {meeting.attendees && meeting.attendees.map((attendee: any, index: number) => (
-                  <IonChip className='ion-padding' color='light' key={index}>{attendee.attendeeName}</IonChip>
-                ))}
+                {Array.isArray(meeting.attendees) ? (
+                  meeting.attendees.map((attendee: any, index: number) => (
+                    <IonChip className="ion-padding" color="light" key={index}>
+                      {attendee.attendeeName}
+                    </IonChip>
+                  ))
+                ) : (
+                  <IonChip className="ion-padding" color="light">
+                    {meeting.attendees?.attendeeName}
+                  </IonChip>
+                )}
                 </>: <></>
                 }
-                {/* <IonText>Participants: {meeting.numParticipants} </IonText><br /> */}
                 <br />
                 
                 {currentTimeUTC > meeting.startTime?
@@ -254,29 +257,24 @@ const UpcomingMeetings: React.FC<{ searchSubject: string }> = ({
                   Join
                 </IonButton>
                 :
-                <IonGrid className='ion-no-padding'>
-                  <IonRow className='ion-no-padding'>
-                    <IonCol>
-                      <IonButton
-                        expand='block'
-                        color='dark'
-                        onClick={() => handleCancelConference(meeting)}
-                      >
-                        Cancel 
-                      </IonButton>
-                    </IonCol>
-                    <IonCol>
-                      <IonButton
+                  <>
+                    <IonButton
                         expand='block'
                         color='light'
                         fill='outline'
                         onClick={() => handleEditConference(meeting)}
-                      >
+                    >
                         Edit 
-                      </IonButton>
-                    </IonCol>
-                  </IonRow>
-                </IonGrid>
+                    </IonButton>
+                    <IonButton
+                      style={{marginTop:'0.5rem'}}                     
+                      expand='block'
+                      color='dark'
+                      onClick={() => handleCancelConference(meeting)}
+                    >
+                      Cancel 
+                    </IonButton>
+                    </>
                 }
               </IonCardContent>
             </IonCard>

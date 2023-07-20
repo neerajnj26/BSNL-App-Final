@@ -47,6 +47,7 @@ import Contacts from './components/Contacts';
 import InstantConf from './components/InstantConf';
 import Settings from './pages/Settings';
 import ScheduleConfirmation from './pages/ScheduleConfirmation';
+import EditConference from './pages/EditConference';
 
 setupIonicReact();
 
@@ -104,6 +105,7 @@ const IonicApp: React.FC<IonicAppProps> = ({
             <Route path="/signup" component={Signup} />
             <Route path="/support" component={Support} />
             <Route path="/contacts" component={Contacts} exact />
+            <Route path="/edit-conf" component={EditConference} exact />
             <Route path="/instant-conf" component={InstantConf} exact />
             <Route path="/schedule-confirmation" component={ScheduleConfirmation} exact />
 

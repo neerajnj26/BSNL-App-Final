@@ -51,9 +51,9 @@ const PreviousConferences: React.FC = () => {
     
         // Format the date and time string
         var formattedDate = year + '-' + month + '-' + day;
-        var formattedTime = hours + ':' + minutes;
-    
+        var formattedTime = hours + ':' + (parseInt(minutes) < 10? `0${minutes}`: minutes);    
         // Return the formatted date and time
+        
         return {
           year: year,
           month: month,

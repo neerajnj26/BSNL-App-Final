@@ -19,13 +19,15 @@ import API from '../api/API.js'
 
 interface ModalCallProps {
   isOpen: boolean;
-  onAddParticipant: (name: string, phoneNumber: string, smsPhoneNumber: string , emailId: string) => void;
+  conferenceID: string;
+  // onAddParticipant: (name: string, phoneNumber: string, smsPhoneNumber: string , emailId: string) => void;
   onClose: () => void;
 }
 
 const ModalCall: React.FC<ModalCallProps> = ({
   isOpen,
-  onAddParticipant,
+  conferenceID,
+  // onAddParticipant,
   onClose,
 }) => {
 
@@ -47,15 +49,27 @@ const ModalCall: React.FC<ModalCallProps> = ({
     return null; // Return null if the cookie is not found
   }
 
-  var token = getCookie("user");
-
+  var cred = localStorage.getItem('cred')
   const handleAddParticipant = () => {
-    onAddParticipant(name, phoneNumber,smsPhoneNumber,emailId);
-    setName('');
-    setPhoneNumber(null);
-    setSmsPhoneNumber(null);
-    setEmailId('');
-    onClose();
+    // onAddParticipant(name, phoneNumber,smsPhoneNumber,emailId);
+    API.InviteParticipants(cred, conferenceID, [{
+      name: name,
+      phone: phoneNumber,
+      role: 'general',
+      isMute: false
+    }] )
+    .then((res) => {
+      console.log(res);})
+    .catch((err) => {
+        console.log(err);
+        alert("Something went wrong. Please try again.");
+      })
+
+      setName('');
+      setPhoneNumber(null);
+      setSmsPhoneNumber(null);
+      setEmailId('');
+      onClose();
   };
 
   const inputStyles = {
