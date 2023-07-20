@@ -36,21 +36,9 @@ const inputStyles = {
   textIndent: '12px',
 };
 
-  const CreateConference: React.FC = () => {
-  
-    const [subject, setSubject] = useState<string>('');
-    const [date, setDate] = useState<string>('');
-    const [timeValue, setTimeValue] = useState<string>('');
-    const [durationValue, setDurationValue] = useState<string>('');
-    const [participantNum, setParticipantNum] = useState<string>('')
-    const [contacts, setContacts] = useState<string[]>([]);
-    const [groups, setGroups] = useState<string[]>([]);
-    const [participants, setParticipants] = useState([]);
-    const [showModal, setShowModal] = useState<boolean>(false)
-    const [participantName, setParticipantName] = useState<string[]>([])
-    
-    //To convert the start date into day, month and year
 const CreateConference: React.FC = () => {
+  const [showModal, setShowModal] = useState<boolean>(false)
+  const [participantName, setParticipantName] = useState<string[]>([])
   const [subject, setSubject] = useState<string>('');
   const [date, setDate] = useState<string>('');
   const [timeValue, setTimeValue] = useState<string>('');
@@ -58,12 +46,7 @@ const CreateConference: React.FC = () => {
   const [participantNum, setParticipantNum] = useState<string>('');
   const [contacts, setContacts] = useState<string[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
-  const [participants, setParticipants] = useState<string[]>([]);
-  const [externalParticipantName, setExternalParticipantName] =
-    useState<string>('');
-  const [externalParticipantPhone, setExternalParticipantPhone] =
-    useState<string>('');
-  const [showAlert, setShowAlert] = useState(false);
+  const [participants, setParticipants] = useState([]);
 
   //To convert the start date into day, month and year
 
@@ -134,6 +117,8 @@ const CreateConference: React.FC = () => {
         "en_US",
         subject,
         formattedStartTimeUTC,
+        false, 
+        participants
       )
 
       .then((res) => {
@@ -155,7 +140,7 @@ const CreateConference: React.FC = () => {
         setShowModal(true)
     }
 
-    const handleAddParticipant = (name: string, phoneNumber: number) => {
+    const handleAddParticipant = (name: string, phoneNumber: string) => {
       const newContact = {
         attendeeName: `${name}`,
         conferenceRole: 'general',
@@ -172,9 +157,12 @@ const CreateConference: React.FC = () => {
     }
 
     const handleRemoveParticipant = (index: number) => {
-      const updatedParticipants = [...participantName];
+      const updatedParticipants = [...participants];
       updatedParticipants.splice(index, 1);
       setParticipants(updatedParticipants);
+      const updatedParticipantNames = [...participantName];
+      updatedParticipantNames.splice(index, 1);
+      setParticipantName(updatedParticipantNames);
     };
 
     const doRefresh = (event) => {

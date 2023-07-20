@@ -30,14 +30,9 @@ class API {
       body: JSON.stringify({
         token: `${token}`,
         resultFields: ["Parties", "Length", "TemplateID"],
-        conditions: {
-          key: "TemplateName",
-          value: "t",
-          matching: "like",
-        },
         isAscend: false,
         pageIndex: 0,
-        pageSize: 15,
+        pageSize: 50,
       }),
     })
       .then((response) => response.json())
@@ -343,7 +338,18 @@ class API {
       .then((data) => data);
   }
 
-  static ModifyConference(token, conferenceID, SubconferenceID, length, size, timeZone, language, subject, startTime, attendees) {
+  static ModifyConference(
+    token,
+    conferenceID,
+    SubconferenceID,
+    length,
+    size,
+    timeZone,
+    language,
+    subject,
+    startTime,
+    attendees
+  ) {
     const url = `${URL}/user/modifyconference`;
 
     return fetch(url, {
@@ -366,8 +372,47 @@ class API {
       }),
     })
       .then((response) => response.json())
+      .then((data) => console.log(data));
+  }
+
+  static OnlineConferenceInfo(token, conID, subconfID) {
+    const url = `${URL}/user/queryonlineconferenceinfo`;
+
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        token: `${token}`,
+        conferenceID: `${conID}`,
+        SubconferenceID: `${subconfID}`,
+      }),
+    })
+      .then((response) => response.json())
       .then((data) => data);
   }
+
+  static deleteconferencetemplate(
+    token,
+    templateId
+  ) {
+    const url = `${URL}/user/deleteconferencetemplate`;
+
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        token: `${token}`,
+        templateID: `${templateId}`
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {console.log(data)});
+  }
+
 }
 
 export default API;

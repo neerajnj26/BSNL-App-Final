@@ -38,7 +38,8 @@ interface LocationState {
 const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({location}) => {
   const [showModal, setShowModal] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  const [participants, setParticipants] = useState([]);
+  const [attendees, setAttendees] = useState([])
+  const [inviteStates, setInviteStates] = useState([]);
 
   const history = useHistory();
 
@@ -46,29 +47,107 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
   const username = localStorage.getItem('userID')
 
   useEffect(() =>{
+    let loopFunction: NodeJS.Timeout;
+
+    if (!Array.isArray(meeting?.attendees)) {
+      setAttendees(meeting?.attendees ? [meeting?.attendees] : []);
+    } else {
+      setAttendees(meeting?.attendees);
+    }
+
     API.Login(meeting?.conferenceKey.conferenceID , meeting?.chair , "ConferenceID")
     .then((res) => {
       console.log("Join Response: ",res);
 
       if (res.message === "success") {
         localStorage.setItem('cred',res.token)
-        localStorage.setItem("Conference ID:", meeting?.conferenceKey.conferenceID)
+        localStorage.setItem("Conference ID:", meeting?.conferenceKey?.conferenceID)
 
           // Start the loop function after successful login
-          const loopFunction = setInterval(() => {
-            API.ConferenceInfo(res.token, meeting.conferenceKey.conferenceID, 0)
+            loopFunction = setInterval(() => {
+            API.OnlineConferenceInfo(
+              res.token,
+              meeting?.conferenceKey?.conferenceID,
+              0
+            )
               .then((confInfoRes) => {
                 // Process the conference info response here
-                console.log("Conference Info: ", confInfoRes)})},10000)
+                console.log("Conference Info: ", confInfoRes);
+          
+                const conferenceDetails =
+                  confInfoRes?.spellQueryconference?.conference;
+                let inviteState = conferenceDetails?.inviteStates?.inviteState;
+                if(Array.isArray(inviteState)){
+                setInviteStates(inviteState);
+                }
+                let participantsDetails = conferenceDetails?.participants
+                  ? conferenceDetails?.participants?.participant
+                  : [];
+                console.log("Invite states: ", inviteState);
+                console.log("Participants details: ", participantsDetails);
 
-      } else alert("Invalid Credentials");
+                if(!Array.isArray(inviteState)) {
+                  setInviteStates(inviteState ? [inviteState] : []);
+                }
+          
+                if (!Array.isArray(participantsDetails)) {
+                  participantsDetails = participantsDetails
+                    ? [participantsDetails]
+                    : [];
+                }
+          
+                inviteState?.forEach((invite) => {
+                  if (invite.state === "200") {
+                    participantsDetails?.forEach((participantDetail) => {
+                      if (
+                        invite?.phone ===
+                        participantDetail?.subscribers?.subscriber?.subscriberID
+                      ) {
+                        setAttendees((prevParticipants) =>
+                          prevParticipants?.reduce((acc, participant) => {
+                            if (
+                              participant?.addressEntry[0]?.address === invite?.phone &&
+                              !participant?.participantID
+                            ) {
+                              return [
+                                ...acc,
+                                {
+                                  ...participant,
+                                  participantID:
+                                    participantDetail?.subscribers?.subscriber?.callID,
+                                },
+                              ];
+                            }
+                            return [...acc, participant];
+                          }, [])
+                        );
+                      }
+                    });
+                  } else {
+                    setAttendees((prevParticipants) =>
+                      prevParticipants.map((participant) => ({
+                        ...participant,
+                        participantID: undefined,
+                      }))
+                    );
+                  }
+                });
+              })
+              .catch((err) => {
+                console.log(err);
+                // Handle errors here
+              });
+          }, 5000);
+          
+          return () => clearInterval(loopFunction);
+      } else console.log("Invalid Credentials");
     })
     .catch((err) => {
       console.log(err);
-      alert("Something went wrong. Please try again.");
+      console.log("Something went wrong. Please try again.");
     });
-    
-    },[]); 
+    return () => clearInterval(loopFunction);
+  },[]); 
 
   const token = localStorage.getItem('cred')
   const confID = localStorage.getItem('Conference ID:')
@@ -93,19 +172,19 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
   };
 
   const handleCallAbsent = () => {
-    const updatedParticipants = participants.map((participant) => ({
+    const updatedParticipants = attendees.map((participant) => ({
       ...participant,
       onCall: true,
     }));
-    setParticipants(updatedParticipants);
+    setAttendees(updatedParticipants);
   };
 
   const handleMuteAll = () => {
-    const updatedParticipants = participants.map((participant) => ({
+    const updatedParticipants = attendees.map((participant) => ({
       ...participant,
       muted: true,
     }));
-    setParticipants(updatedParticipants);
+    setAttendees(updatedParticipants);
   };
 
   const handleCreateSubConf = () => {
@@ -113,43 +192,54 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
   };
 
 
-  const handleAddParticipant = (name: string, phoneNumber: number) => {
-    const newParticipant = { name, phoneNumber, muted: false };
-    setParticipants((prevParticipants) => [
+  const handleAddParticipant = (name: string, phoneNumber: string) => {
+    const newParticipant = {
+      attendeeName: name,
+      conferenceRole: 'general',
+      addressEntry: [
+        {
+          address: phoneNumber,
+          type: 'phone'
+        }
+      ],
+      muted: false,
+      onCall: false 
+    };
+    setAttendees((prevParticipants) => [
       ...prevParticipants,
       newParticipant,
     ]);
   };
 
   const handleDeleteParticipant = (index) => {
-    const updatedParticipants = [...participants];
+    const updatedParticipants = [...attendees];
     updatedParticipants.splice(index, 1);
-    setParticipants(updatedParticipants);
+    setAttendees(updatedParticipants);
   }
 
   const handleToggleParticipantMute = (index: number) => {
-    const updatedParticipants = [...participants];
+    const updatedParticipants = [...attendees];
     const participant = updatedParticipants[index];
     participant.muted = !participant.muted;
-    setParticipants(updatedParticipants);
+    setAttendees(updatedParticipants);
   };
 
   const handleCallParticipantAbsent = (index: number) => {
-    const participant = participants[index]
+    const attendee = attendees[index]
     API.InviteParticipants(token, confID, [{
-        name: participant.name,
-        phone: participant.phoneNumber
-  }] )
-  .then((res) => {
-    console.log(res);})
-  .catch((err) => {
-      console.log(err);
-      alert("Something went wrong. Please try again.");
-    })
+          name: attendee?.attendeeName,
+          phone: attendee?.addressEntry?.address
+    }] )
+    .then((res) => {
+      console.log(res);})
+    .catch((err) => {
+        console.log(err);
+        alert("Something went wrong. Please try again.");
+      })
     
-    const updatedParticipants = [...participants];
-    participant.onCall = !participant.onCall;
-    setParticipants(updatedParticipants);
+    const updatedParticipants = [...attendees];
+    attendee.onCall = !attendee.onCall;
+    setAttendees(updatedParticipants);
   };
 
   return (
@@ -171,10 +261,12 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
           </IonButton>
           {/* Participant List */}
           <ContactList 
-            participants={participants} 
+            participants={attendees} 
             onDeleteParticipant={handleDeleteParticipant}
             onToggleParticipantMute={handleToggleParticipantMute}
-            onCallAbsentParticipant= {handleCallParticipantAbsent} />
+            onCallAbsentParticipant= {handleCallParticipantAbsent} 
+            inviteStates = {inviteStates}
+            />
 
           {/* Fab Button */}
           <IonFab className='ion-margin' vertical="bottom" horizontal="end" slot="fixed">

@@ -130,7 +130,7 @@ const PreviousConferences: React.FC = () => {
                         <IonText>Conference ID</IonText><br />
                         </IonCol>
                         <IonCol className="ion-no-padding" size="6" style={{textAlign:'left'}}>
-                        <IonText>: {meeting?.conferenceKey.conferenceID}</IonText><br />
+                        <IonText>: {meeting.conferenceKey?.conferenceID ?? ''}</IonText><br />
                         </IonCol>
                     </IonRow>
                     <IonRow>
