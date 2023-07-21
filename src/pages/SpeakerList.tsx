@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   IonHeader,
   IonToolbar,
@@ -7,32 +7,52 @@ import {
   IonPage,
   IonButtons,
   IonMenuButton,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonButton,
   IonGrid,
-  IonRow,
   IonCol,
+  IonRow,
+  IonIcon,
 } from '@ionic/react';
-import SpeakerItem from '../components/SpeakerItem';
-import { Speaker } from '../models/Speaker';
-import { Session } from '../models/Schedule';
-import { connect } from '../data/connect';
-import * as selectors from '../data/selectors';
+
+import API from '../api/API.js'
 import './SpeakerList.scss';
+import LocalContacts from '../components/LocalContacts.js';
+import { download } from 'ionicons/icons';
 
-interface OwnProps {}
+const SpeakerList: React.FC = () => {
+  const [jsonData, setJsonData] = useState<any[]>([]);
 
-interface StateProps {
-  speakers: Speaker[];
-  speakerSessions: { [key: string]: Session[] };
-}
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-interface DispatchProps {}
+  const handleImportClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
 
-interface SpeakerListProps extends OwnProps, StateProps, DispatchProps {}
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
 
-const SpeakerList: React.FC<SpeakerListProps> = ({
-  speakers,
-  speakerSessions,
-}) => {
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const data = event.target?.result;
+        if (data instanceof ArrayBuffer) {
+          // Dynamically import xlsx
+          const XLSX = await import('xlsx');
+          const workbook = XLSX.read(new Uint8Array(data), { type: 'array' });
+          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          setJsonData(json)
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  };
+
   return (
     <IonPage id="speaker-list">
       <IonHeader translucent={true}>
@@ -50,29 +70,60 @@ const SpeakerList: React.FC<SpeakerListProps> = ({
             <IonTitle size="large">Contacts</IonTitle>
           </IonToolbar>
         </IonHeader>
-
-        <IonGrid fixed>
+        <input
+          ref={fileInputRef}
+          type="file"
+          style={{ display: 'none' }}
+          onInput={handleFileChange}
+        />
+        <IonGrid>
           <IonRow>
-            {speakers.map((speaker) => (
-              <IonCol size="12" size-md="6" key={speaker.id}>
-                <SpeakerItem
-                  key={speaker.id}
-                  speaker={speaker}
-                  sessions={speakerSessions[speaker.name]}
-                />
-              </IonCol>
-            ))}
+            <IonCol size='5'>
+              <IonButton className='ion-no-margin' expand='block'>Add Contacts</IonButton>
+            </IonCol>
+            <IonCol size='5'>
+              <IonButton className='ion-no-margin' expand='block' fill='outline'>Add Groups</IonButton>
+            </IonCol>
+            <IonCol size='2'>
+              <IonIcon 
+                className='ion-no-margin' 
+                icon={download}   
+                color='primary'
+                style={{
+                  fontSize:'2.5rem',
+                  // position: 'relative',
+                  // right:'15px',
+                  // bottom: '9px'
+                }}
+                onClick={handleImportClick} />
+            </IonCol>
           </IonRow>
         </IonGrid>
+        <LocalContacts />
+        <IonList className='ion-margin'>
+        {jsonData.length > 0 && (
+              <IonItem>
+                <IonLabel style={{ fontWeight: 'bolder' }}>
+                  {jsonData[0][0]}
+                </IonLabel>
+                <IonLabel style={{ fontWeight: 'bolder' }}>
+                  {jsonData[0][2]}
+                </IonLabel>
+                {/* Add more IonLabels for other columns */}
+              </IonItem>
+            )}
+          {jsonData?.slice(1).map((data, index) => (
+            <IonItem key={index}>
+              <IonLabel>{data[0]}</IonLabel>
+              <IonLabel>{data[2]}</IonLabel>
+              {/* Add more IonLabels for other columns */}
+            </IonItem>
+          ))}
+        </IonList>
+
       </IonContent>
     </IonPage>
   );
 };
 
-export default connect<OwnProps, StateProps, DispatchProps>({
-  mapStateToProps: (state) => ({
-    speakers: selectors.getSpeakers(state),
-    speakerSessions: selectors.getSpeakerSessions(state),
-  }),
-  component: React.memo(SpeakerList),
-});
+export default SpeakerList;

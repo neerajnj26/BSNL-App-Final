@@ -24,6 +24,7 @@ import CreateTempWindow from './CreateTempWindow';
 import API from '../api/API.js';
 import { addCircle } from 'ionicons/icons';
 import './ConferenceTemplates.scss';
+import { useHistory } from 'react-router';
 
 const ConferenceTemplates: React.FC = () => {
   const [templates, setTemplates] = useState([]);
@@ -74,6 +75,52 @@ const ConferenceTemplates: React.FC = () => {
       event.detail.complete(); 
     }, 2000); 
   };
+
+  const history = useHistory();
+
+  const handleStartClick = (temp: any) => {
+      const durationInMinutes = parseInt(temp.Length, 10)
+      const durationInMilliSeconds = durationInMinutes * 60 * 1000;
+      
+      function getCookie(cookieName: any) {
+        const cookieString = document.cookie;
+        const cookies = cookieString.split(":");
+  
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.startsWith(cookieName + "=")) {
+            return cookie.substring(cookieName.length + 1);
+          }
+        }
+  
+        return null; // Return null if the cookie is not found
+      }
+
+      var token = getCookie("user");
+
+      API.createconference(
+        token,
+        durationInMilliSeconds,
+        temp.Parties,
+        48,
+        "en_US",
+        temp.TemplateName,
+        0,
+        false, 
+      )
+
+      .then((res) => {
+        console.log(res);
+      }).catch((err)=>{
+        console.log(err)
+      })
+
+      history.replace('/schedule-confirmation');
+  }
+
+  const handleScheduleClick = (temp: any) => {
+    history.push('/schedule-conf', {temp})
+  }
 
   const filteredTemplates = templates.filter((temp) =>
     temp.TemplateName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -126,12 +173,12 @@ const ConferenceTemplates: React.FC = () => {
                 <br />
                 <IonRow>
                   <IonCol>
-                    <IonButton color="primary" expand="block">
+                    <IonButton color="primary" expand="block" onClick={() => handleStartClick(temp)}>
                       Start Now
                     </IonButton>
                   </IonCol>
                   <IonCol>
-                    <IonButton color="success" expand="block">
+                    <IonButton color="success" expand="block" onClick={() => handleScheduleClick(temp)}>
                       Schedule
                     </IonButton>
                   </IonCol>

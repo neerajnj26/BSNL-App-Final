@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RouteComponentProps, withRouter, useHistory } from 'react-router';
+import { RouteComponentProps, withRouter, useHistory, useLocation } from 'react-router';
 
 import {
   IonBackButton,
@@ -70,6 +70,7 @@ const Menu: React.FC<MenuProps> = ({
 }) => {
 
   const history = useHistory()
+  const location = useLocation()
 
   const handleLogout = () => { 
 
@@ -88,7 +89,13 @@ const Menu: React.FC<MenuProps> = ({
         return null;
       }
       const token = getCookie("user");
-      console.log(API.Logout(token));
+      API.Logout(token)
+        .then((res) => {
+          console.log(res)
+        })
+        .catch((err) => {
+          console.log(err)
+        })
       function clearAllCookies() {
         var cookies = document.cookie.split(":");
   

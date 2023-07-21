@@ -8,7 +8,7 @@ import { chevronBackOutline, chevronForwardOutline } from "ionicons/icons";
 const PreviousConferences: React.FC = () => {
 
     const [meetings, setMeetings] = useState([]);
-    const [totalPages, setTotalPages] = useState(25);
+    const [totalPages, setTotalPages] = useState(28);
     const [pageIndex, setPageIndex] = useState(totalPages);
 
     const handleLeftClick = () => {

@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   IonToolbar,
   IonContent,
@@ -28,7 +28,7 @@ import { connect } from '../data/connect';
 import { setSearchText } from '../data/sessions/sessions.actions';
 import { Schedule } from '../models/Schedule';
 import DashboardContents from './DashboardContents';
-import { useHistory } from 'react-router';
+import { useHistory, useLocation } from 'react-router';
 
 interface OwnProps {}
 
@@ -54,7 +54,6 @@ const SchedulePage: React.FC<SchedulePageProps> = ({
   const [viewHistory, setViewHistory] = useState<boolean>(false);
   const [searchSubject, setSearchSubject] = useState<string>('');
   const ionRefresherRef = useRef<HTMLIonRefresherElement>(null);
-  const [showCompleteToast, setShowCompleteToast] = useState(false);
 
   const history = useHistory();
 

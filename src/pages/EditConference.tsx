@@ -29,7 +29,7 @@ import {
   import { add, closeCircle, time } from 'ionicons/icons';
   import API from '../api/API.js'
   import { RouteComponentProps, useLocation, useHistory } from 'react-router';
-  import ModalCall from '../components/ModalCall';
+  import ModalCreateConf from '../components/ModalCreateConf';
 
   interface LocationState {
     meeting: any;
@@ -420,7 +420,7 @@ import {
               <IonIcon icon={add} />
             </IonFabButton>
           </IonFab>
-          <ModalCall
+          <ModalCreateConf
               isOpen={showModal}
               onAddParticipant={handleAddParticipant}
               onClose={() => setShowModal(false)}

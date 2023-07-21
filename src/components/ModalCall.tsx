@@ -19,15 +19,15 @@ import API from '../api/API.js'
 
 interface ModalCallProps {
   isOpen: boolean;
+  onAddParticipant: (name: string, phoneNumber: string) => void;
   conferenceID: string;
-  // onAddParticipant: (name: string, phoneNumber: string, smsPhoneNumber: string , emailId: string) => void;
   onClose: () => void;
 }
 
 const ModalCall: React.FC<ModalCallProps> = ({
   isOpen,
   conferenceID,
-  // onAddParticipant,
+  onAddParticipant,
   onClose,
 }) => {
 

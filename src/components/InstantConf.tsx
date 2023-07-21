@@ -22,6 +22,7 @@ import {
   volumeMute,
   people,
   chevronUpCircle,
+  volumeHigh,
 } from 'ionicons/icons';
 
 import ModalCall from './ModalCall';
@@ -40,12 +41,14 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
   const [showAlert, setShowAlert] = useState(false);
   const [attendees, setAttendees] = useState([])
   const [inviteStates, setInviteStates] = useState([]);
+  const [isMuteAll, setIsMuteAll] = useState(false)
 
   // console.log(inviteStates)
   const history = useHistory();
 
   const { meeting } = location.state || {};
   const username = localStorage.getItem('userID')
+  let participantsDetails
 
   useEffect(() =>{
     let loopFunction: NodeJS.Timeout;
@@ -81,7 +84,7 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
             if(Array.isArray(inviteState)){
             setInviteStates(inviteState);
             }
-            let participantsDetails = conferenceDetails?.participants
+             participantsDetails = conferenceDetails?.participants
               ? conferenceDetails?.participants?.participant
               : [];
             console.log("Invite states: ", inviteState);
@@ -260,22 +263,35 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
   };
 
   const handleMuteAll = () => {
-    const updatedParticipants = attendees.map((participant) => ({
-      ...participant,
-      muted: true,
-    }));
-    setAttendees(updatedParticipants);
+    const cred = localStorage.getItem("cred");
+    API.MuteConference(cred, meeting?.conferenceKey?.conferenceID, true)
+      .then((res) => {
+        console.log("Mute all response: ", res);
+      })
+      .catch((err) => {
+        console.log("Mute all error: ", err);
+        alert("Error in muting all participants");
+      });
+
+    setIsMuteAll(true);
   };
+
+  const handleUnmuteAll = () => {
+    const cred = localStorage.getItem("cred");
+    API.MuteConference(cred, meeting.conferenceKey.conferenceID, false)
+      .then((res) => {
+        console.log("Unmute all response: ", res);
+      })
+      .catch((err) => {
+        console.log("Unmute all error: ", err);
+        alert("Error in unmuting all participants");
+      });
+    setIsMuteAll(false);
+  }
 
   const handleCreateSubConf = () => {
     console.log('click createsubconf')
   };
-
-  const handleDeleteParticipant = (index) => {
-    const updatedParticipants = [...attendees];
-    updatedParticipants.splice(index, 1);
-    setAttendees(updatedParticipants);
-  }
 
   const handleToggleParticipantMute = (index: number) => {
     const updatedParticipants = [...attendees];
@@ -283,6 +299,10 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
     participant.muted = !participant.muted;
     setAttendees(updatedParticipants);
   };
+
+  const handleNone = () => {
+    console.log('none')
+  }
 
   const handleCallParticipantAbsent = (index: number) => {
     const attendee = inviteStates[index]
@@ -349,8 +369,11 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
             </div>
             <div className="fabicon-label">
               <span className='label'>Mute <br />All</span>
-              <IonFabButton onClick={handleMuteAll} className='fabicon-btn'>
-                <IonIcon icon={volumeMute} />
+              <IonFabButton className='fabicon-btn'>
+                {isMuteAll? 
+                <IonIcon icon={volumeMute} onClick={handleUnmuteAll} />:
+                <IonIcon icon={volumeHigh} onClick={handleMuteAll} />
+                }
               </IonFabButton>
             </div>
             <div className="fabicon-label">
@@ -365,8 +388,8 @@ const InstantConf: React.FC<RouteComponentProps<any, any, LocationState>> = ({lo
           {/* Modal */}
           <ModalCall
             isOpen={showModal}
+            onAddParticipant={handleNone}
             conferenceID = {meeting?.conferenceKey?.conferenceID}
-            // onAddParticipant={handleAddParticipant}
             onClose={() => {setShowModal(false)}}
           />
           <IonAlert

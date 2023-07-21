@@ -27,8 +27,7 @@ import './CreateConference.scss'
 import { add, closeCircle, time } from 'ionicons/icons';
 import API from '../api/API.js'
 import { useHistory } from 'react-router';
-import ModalCall from '../components/ModalCall';
-
+import ModalCreateConf from '../components/ModalCreateConf';
 const inputStyles = {
   border: '1px solid #d9d9d9',
   borderRadius: '4px',
@@ -141,6 +140,7 @@ const CreateConference: React.FC = () => {
     }
 
     const handleAddParticipant = (name: string, phoneNumber: string) => {
+      console.log("clicked")
       const newContact = {
         attendeeName: `${name}`,
         conferenceRole: 'general',
@@ -314,7 +314,7 @@ const CreateConference: React.FC = () => {
             <IonIcon icon={add} />
           </IonFabButton>
         </IonFab>
-        <ModalCall
+        <ModalCreateConf
             isOpen={showModal}
             onAddParticipant={handleAddParticipant}
             onClose={() => setShowModal(false)}

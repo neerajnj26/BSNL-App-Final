@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   IonButton,
   IonCard,
@@ -6,12 +6,8 @@ import {
   IonCardHeader,
   IonCardTitle,
   IonChip,
-  IonCol,
   IonContent,
-  IonGrid,
   IonIcon,
-  IonLabel,
-  IonRow,
   IonText,
 } from '@ionic/react';
 import { chevronDownOutline, chevronUpOutline, trash } from 'ionicons/icons';
@@ -64,7 +60,7 @@ const UpcomingMeetings: React.FC<{ searchSubject: string }> = ({
       .catch((err: any) => {
         console.log('Could not fetch meeting details. Please try again later.');
       });
-  }, [meetings]);
+  }, []);
 
   //Conversion Functions
 
