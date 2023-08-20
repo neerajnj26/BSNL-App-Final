@@ -12,4 +12,4 @@ This application is a voice conferencing app made using the Ionic Framework and 
 * In case it doesnot work,
     - `npm install --legacy-peer-deps`
     - `npm i --force`
-* Run `ionic serve` in a terminal from the project root.
+* Run `ionic serve` in a terminal from the project root.# BSNL-App-Final
