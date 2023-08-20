@@ -122,11 +122,12 @@ const CreateConference: React.FC = () => {
 
       .then((res) => {
         console.log(res);
+        const meeting = res.scheduleConferenceResult.conferenceInfo
+        // const meeting = res.conferenceResult.conferenceInfo;
+        history.replace('/schedule-confirmation', {meeting});
       }).catch((err)=>{
         console.log(err)
-      })
-
-      history.replace('/schedule-confirmation');
+      })  
     }
 
     const handleAddContactGroup = () => {

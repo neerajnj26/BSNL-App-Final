@@ -91,9 +91,6 @@ const SpeakerList: React.FC = () => {
                 color='primary'
                 style={{
                   fontSize:'2.5rem',
-                  // position: 'relative',
-                  // right:'15px',
-                  // bottom: '9px'
                 }}
                 onClick={handleImportClick} />
             </IonCol>

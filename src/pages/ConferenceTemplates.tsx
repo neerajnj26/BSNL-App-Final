@@ -114,8 +114,7 @@ const ConferenceTemplates: React.FC = () => {
       }).catch((err)=>{
         console.log(err)
       })
-
-      history.replace('/schedule-confirmation');
+      history.push('/tabs')
   }
 
   const handleScheduleClick = (temp: any) => {
